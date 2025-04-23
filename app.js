@@ -3,6 +3,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const sessionConfig = require("./config/session");
 const passport = require("passport");
+const session = require("express-session");
 const PORT = process.env.PORT || 8000;
 
 //initialize app
@@ -26,6 +27,9 @@ app.use(passport.session());
 //Routes
 app.use("/auth", authRoutes);
 //home route
+app.get("/", (req, res) => {
+	res.send("homepage");
+});
 
 app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
