@@ -1,12 +1,34 @@
 const prisma = require("../config/database");
 const bcrypt = require("bcryptjs");
 
-async function registerUser(req, res) {
-	try {
-		const { username, email, password } = req.body;
-		const hashedPassword = await bcrypt.hash(password, 10);
+function showRegisterPage(req, res) {
+	res.render("auth/register", {
+		error: null,
+		formData: { username: "", email: "" },
+	});
+}
 
-		// add credentials to the db
+async function registerUser(req, res) {
+	const { username, email, password } = req.body;
+
+	// Basic validation (will be replaced with express-validator)
+	if (!username || !email || !password) {
+		return res.status(400).render("auth/register", {
+			error: "All fields are required",
+			formData: { username, email },
+		});
+	}
+	try {
+		//check if email exists
+		const existingUser = await prisma.user.findUnique({ where: { email } });
+		if (existingUser) {
+			return res.status(400).render("auth/register", {
+				error: "Email already in use",
+				formData: { username, email },
+			});
+		}
+		// create user
+		const hashedPassword = await bcrypt.hash(password, 10);
 		const user = await prisma.user.create({
 			data: {
 				username,
@@ -17,26 +39,47 @@ async function registerUser(req, res) {
 
 		//auto-login user after registration,
 		req.login(user, (error) => {
-			if (error) throw error;
-			return res.redirect("/dashboard");
+			if (error) {
+				console.error("Auto-login error:", error);
+				return res.redirect("/auth/login");
+			}
+			res.redirect("/dashboard");
 		});
 	} catch (error) {
-		let message = "Registration failed";
+		console.error("Registration error:", error);
+		let message = "Registration failed. Please try again.";
 		if (error.code === "P2002") {
 			message = "Email already in use";
 		}
-		res.status(400).render("auth/register", { error: message });
+		res.status(400).render("auth/register", {
+			error: message,
+			formData: { username, email },
+		});
 	}
 }
 
 async function logout(req, res) {
 	req.logout((error) => {
-		if (error) return res.status(500).send("Logout failed");
+		if (error) {
+			console.error("Logout error:", error);
+			return res
+				.status(500)
+				.render("error", { message: "Logout failed", error });
+		}
 		res.redirect("/");
 	});
 }
 
+function showLoginPage(req, res) {
+	res.render("auth/login", {
+		error: req.query.error,
+		formData: { email: req.query.email },
+	});
+}
+
 module.exports = {
+	showRegisterPage,
 	registerUser,
 	logout,
+	showLoginPage,
 };
