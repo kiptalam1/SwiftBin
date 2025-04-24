@@ -12,9 +12,6 @@ const {
 	ensureAuthenticated,
 } = require("../middlewares/authMiddleware");
 
-
-
-
 //show register page
 router.get("/register", ensureGuest, showRegisterPage);
 //register handler
@@ -27,8 +24,8 @@ router.post(
 	ensureGuest,
 	passport.authenticate("local", {
 		successRedirect: "/dashboard",
-		failureRedirect: "/auth/login?error=Invalid credentials",
-		failureFlash: false,
+		failureRedirect: "/auth/login",
+		failureFlash: true,
 	})
 );
 //logout user

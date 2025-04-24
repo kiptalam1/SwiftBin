@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Dashboard - SwiftBin</title>
+	</head>
+	<body>
+		<header>
+			<h1>Welcome, <%= user.username %></h1>
+			<a href="/auth/logout">Logout</a>
+		</header>
+
+		<main>
+			<!-- File Upload Section -->
+			<section>
+				<h2>Upload Files</h2>
+				<form
+					action="/files/upload"
+					method="POST"
+					enctype="multipart/form-data"
+				>
+					<input type="file" name="file" multiple />
+					<select name="folder">
+						<option value="">Root Folder</option>
+						<% user.folders.forEach(folder => { %>
+						<option value="<%= folder.id %>"><%= folder.name %></option>
+						<% }); %>
+					</select>
+					<button type="submit">Upload</button>
+				</form>
+			</section>
+
+			<!-- Folder Creation -->
+			<section>
+				<h2>Create Folder</h2>
+				<form action="/folders/create" method="POST">
+					<input type="text" name="name" placeholder="Folder Name" required />
+					<select name="parentId">
+						<option value="">Root Level</option>
+						<% user.folders.forEach(folder => { %>
+						<option value="<%= folder.id %>"><%= folder.name %></option>
+						<% }); %>
+					</select>
+					<button type="submit">Create</button>
+				</form>
+			</section>
+
+			<!-- File/Folder Listing -->
+			<section>
+				<h2>Your Files</h2>
+				<% if (user.folders.length > 0) { %>
+				<ul class="folder-list">
+					<% user.folders.forEach(folder => { %>
+					<li>
+						<a href="/folders/<%= folder.id %>"> <%= folder.name %> </a>
+						<span>Created: <%= folder.createdAt.toLocaleDateString() %></span>
+					</li>
+					<% }); %>
+				</ul>
+				<% } else { %>
+				<p>No folders yet. Create your first folder!</p>
+				<% } %> <% if (user.files.length > 0) { %>
+				<table>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Size</th>
+							<th>Uploaded</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<% user.files.forEach(file => { %>
+						<tr>
+							<td><%= file.filename %></td>
+							<td><%= (file.size / 1024).toFixed(2) %> KB</td>
+							<td><%= file.createdAt.toLocaleDateString() %></td>
+							<td>
+								<a href="/files/download/<%= file.id %>">Download</a>
+								<a href="/files/delete/<%= file.id %>">Delete</a>
+							</td>
+						</tr>
+						<% }); %>
+					</tbody>
+				</table>
+				<% } else { %>
+				<p>No files uploaded yet.</p>
+				<% } %>
+			</section>
+		</main>
+	</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login - SwiftBin</title>
+	</head>
+	<body>
+		<main>
+			<h1>Login to SwiftBin</h1>
+
+			<% if (errorMessages && errorMessages.length) { %>
+			<div class="alert alert-error"><%= errorMessages[0] %></div>
+			<% } %> <% if (successMessages && successMessages.length) { %>
+			<div class="alert alert-success"><%= successMessages[0] %></div>
+			<% } %>
+
+			<form action="/auth/login" method="POST">
+				<div>
+					<label for="email">Email</label>
+					<input
+						type="email"
+						id="email"
+						name="email"
+						value="<%= formData.email || '' %>"
+						required
+					/>
+				</div>
+
+				<div>
+					<label for="password">Password</label>
+					<input type="password" id="password" name="password" required />
+				</div>
+
+				<button type="submit">Login</button>
+			</form>
+
+			<p>Don't have an account? <a href="/auth/register">Register</a></p>
+		</main>
+	</body>
+</html>

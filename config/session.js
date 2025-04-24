@@ -1,4 +1,4 @@
-const session = require("express-session");
+const crypto = require("crypto");
 const { PrismaSessionStore } = require("@quixo3/prisma-session-store");
 const prisma = require("./database");
 
@@ -9,7 +9,8 @@ const sessionConfig = {
 	store: new PrismaSessionStore(prisma, {
 		checkPeriod: 2 * 60 * 1000,
 		dbRecordIdIsSessionId: true,
-		dbRecordIdFunction: undefined,
+		sidFieldName: "sid", // Maps to your schema field
+		sessionModelName: "session", // Explicit model name
 	}),
 	cookie: {
 		maxAge: 24 * 60 * 60 * 1000, // 1 day

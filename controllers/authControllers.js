@@ -3,77 +3,73 @@ const bcrypt = require("bcryptjs");
 
 function showRegisterPage(req, res) {
 	res.render("auth/register", {
-		error: null,
-		formData: { username: "", email: "" },
+		error: req.flash("error")[0], // Get first error flash message
+		formData: {
+			username: req.flash("formData")[0]?.username || "",
+			email: req.flash("formData")[0]?.email || "",
+		},
 	});
 }
 
 async function registerUser(req, res) {
 	const { username, email, password } = req.body;
 
-	// Basic validation (will be replaced with express-validator)
+	// Basic validation
 	if (!username || !email || !password) {
-		return res.status(400).render("auth/register", {
-			error: "All fields are required",
-			formData: { username, email },
-		});
+		req.flash("error", "All fields are required");
+		req.flash("formData", { username, email });
+		return res.redirect("/auth/register");
 	}
+
 	try {
-		//check if email exists
 		const existingUser = await prisma.user.findUnique({ where: { email } });
 		if (existingUser) {
-			return res.status(400).render("auth/register", {
-				error: "Email already in use",
-				formData: { username, email },
-			});
+			req.flash("error", "Email already in use");
+			req.flash("formData", { username, email });
+			return res.redirect("/auth/register");
 		}
-		// create user
+
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const user = await prisma.user.create({
-			data: {
-				username,
-				email,
-				password: hashedPassword,
-			},
+			data: { username, email, password: hashedPassword },
 		});
 
-		//auto-login user after registration,
 		req.login(user, (error) => {
 			if (error) {
-				console.error("Auto-login error:", error);
+				req.flash("error", "Auto-login failed. Please login manually.");
 				return res.redirect("/auth/login");
 			}
-			res.redirect("/dashboard");
+			req.flash("success", "Registration successful!");
+			return res.redirect("/dashboard");
 		});
 	} catch (error) {
 		console.error("Registration error:", error);
-		let message = "Registration failed. Please try again.";
-		if (error.code === "P2002") {
-			message = "Email already in use";
-		}
-		res.status(400).render("auth/register", {
-			error: message,
-			formData: { username, email },
-		});
+		const message =
+			error.code === "P2002"
+				? "Email already in use"
+				: "Registration failed. Please try again.";
+
+		req.flash("error", message);
+		req.flash("formData", { username, email });
+		res.redirect("/auth/register");
 	}
 }
 
 async function logout(req, res) {
 	req.logout((error) => {
 		if (error) {
-			console.error("Logout error:", error);
-			return res
-				.status(500)
-				.render("error", { message: "Logout failed", error });
+			req.flash("error", "Logout failed");
+			return res.redirect("/dashboard");
 		}
+		req.flash("success", "You have been logged out");
 		res.redirect("/");
 	});
 }
 
 function showLoginPage(req, res) {
 	res.render("auth/login", {
-		error: req.query.error,
-		formData: { email: req.query.email },
+		error: req.flash("error")[0],
+		formData: { email: req.flash("formData")[0]?.email || "" },
 	});
 }
 
